@@ -1,0 +1,5 @@
+LIBRARY passferry_filter
+EXPORTS
+    InitializeChangeNotify
+    PasswordChangeNotify
+    PasswordFilter

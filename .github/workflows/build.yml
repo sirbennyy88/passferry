@@ -1,0 +1,50 @@
+name: Build DLL
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'filter-dll/**'
+      - '.github/workflows/build.yml'
+  pull_request:
+    paths:
+      - 'filter-dll/**'
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: ./filter-dll
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Compile passferry_filter.dll
+        shell: cmd
+        run: |
+          cl /nologo /LD /O2 /W4 /GS /Zi ^
+             /D_WIN32_WINNT=0x0A00 /DUNICODE /D_UNICODE ^
+             passferry_filter.c ^
+             /link /DEF:passferry_filter.def /MACHINE:X64 ^
+                   /SUBSYSTEM:WINDOWS /DLL ^
+                   /OUT:passferry_filter.dll
+
+      - name: Verify exports
+        shell: cmd
+        run: |
+          dumpbin /EXPORTS passferry_filter.dll
+          dumpbin /HEADERS passferry_filter.dll | findstr machine
+
+      - name: Upload DLL artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: passferry_filter-${{ github.sha }}
+          path: |
+            filter-dll/passferry_filter.dll
+            filter-dll/passferry_filter.pdb
+          retention-days: 30

@@ -1,0 +1,33 @@
+# Build artifacts
+*.dll
+*.pdb
+*.obj
+*.exp
+*.lib
+*.ilk
+
+# Code-signing certificates and keys — NEVER commit these
+*.cer
+*.pfx
+*.p12
+*.key
+*.pem
+SyncPwdFilter-Lab.cer
+
+# PowerShell session/state files
+state.json
+config.json
+preflight-report-*.csv
+*.log
+logs/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*~
+
+# Sensitive runtime data
+allowed-clients.txt
