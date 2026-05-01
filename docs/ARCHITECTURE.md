@@ -79,14 +79,14 @@ A user-mode PowerShell Windows service running on each source DC alongside the D
 - **mTLS authentication**: presents a client cert from `LocalMachine\My`, broker validates against an allow-list
 - **Run as gMSA**: no static service-account password
 - **Logging**: structured logs to `C:\ProgramData\PassFerryForwarder\forwarder.log`
-- **Failure handling (v0.1)**: drops events if broker is unreachable. **Production should add a DPAPI-encrypted retry queue — this is on the v0.2 roadmap.**
+- **Failure handling (v0.1)**: drops events if broker is unreachable. **Production should add a DPAPI-encrypted retry queue — this is on the v0.1.1 roadmap.**
 
 ### 4. broker.ps1
 
 A user-mode PowerShell service running on a member server in the target forest. Listens on HTTPS (default port 8443) with mTLS. For each accepted request:
 
 1. Validates the client cert thumbprint against the allow-list (`allowed-clients.txt`, re-read every request — adding a new source DC requires no service restart)
-2. Resolves the source SAM → source `objectGUID` via the source forest (an ADWS round-trip — to be pushed into the forwarder in v0.2)
+2. Resolves the source SAM → source `objectGUID` via the source forest (an ADWS round-trip — to be pushed into the forwarder in v0.1.1)
 3. Looks up the matching target user via the configured `BackrefAttribute` (default `extensionAttribute15`)
 4. Calls `Set-ADAccountPassword` on the target DC over LDAPS
 
@@ -187,8 +187,8 @@ Changing the back-reference attribute (e.g., from `extensionAttribute15` to `emp
 
 | Feature | Why deferred | Sprint |
 |---------|--------------|--------|
-| DPAPI retry queue in forwarder | Drops password changes if broker unreachable | v0.2 |
-| objectGUID sent from forwarder | Avoids broker round-trip to source | v0.2 |
+| DPAPI retry queue in forwarder | Drops password changes if broker unreachable | v0.1.1 |
+| objectGUID sent from forwarder | Avoids broker round-trip to source | v0.1.1 |
 | SID History migration | Provisioning extension only | v0.2 |
 | Group migration | Substantial new logic | v0.3 |
 | Computer migration | Requires client-side agent | v0.4 |

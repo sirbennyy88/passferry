@@ -17,8 +17,8 @@ All notable changes to PassFerry are documented here. Format follows [Keep a Cha
 
 ### Known limitations (v0.1)
 - Not production-validated — prototype status, lab testing required
-- Drops password changes silently when broker is unreachable (DPAPI retry queue is on the v0.2 roadmap)
-- Broker performs a round-trip to the source forest to resolve SAM → objectGUID (forwarder-side resolution is on the v0.2 roadmap)
+- Drops password changes silently when broker is unreachable (DPAPI retry queue is on the v0.1.1 roadmap)
+- Broker performs a round-trip to the source forest to resolve SAM → objectGUID (forwarder-side resolution is on the v0.1.1 roadmap)
 - Self-signed code-signing only works on DCs without LSA Protection (RunAsPPL=0); production deployments with RunAsPPL require Microsoft's LSA-plugin signing program
 - No SID History migration (planned v0.2)
 - No group, computer, or security translation migration (planned v0.3-v0.6)
