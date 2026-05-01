@@ -12,7 +12,7 @@
 
 The Active Directory Migration Tool (ADMT) version 3.2 is the long-standing Microsoft tool for migrating users, passwords, and groups between AD forests. As of Windows Server 2025, **ADMT 3.2 is effectively unsupported for multi-domain and multi-tenant migrations** — it has not been updated since 2014, depends on deprecated authentication mechanisms (RC4, unconstrained delegation, legacy Password Export Server protocols), and is incompatible with Server 2025's security defaults including LSA Protection (RunAsPPL) and strict driver/DLL signing requirements.
 
-For organizations consolidating multiple legacy AD forests into a single modern forest — typically as a precursor to Microsoft Entra ID (formerly Azure AD) integration via Entra Connect — this leaves a gap. Commercial alternatives (Quest Migrator Pro, BinaryTree, Semperis ADFR) exist but require licensing budget. Microsoft's recommended path is "use Entra Cloud Sync directly", which works for cloud-only consolidation but does not solve the on-premises forest-to-forest sync many environments still need.
+For organizations consolidating multiple legacy AD forests into a single modern forest — typically as a precursor to Microsoft Entra ID (formerly Azure AD) integration via Entra Connect — this leaves a gap. Commercial alternatives (Quest Migrator Pro, BinaryTree, Semperis ADFR) exist but require licensing budget. Microsoft's recommended path is "use Entra Cloud Sync directly", which works for cloud-only consolidation but **does not solve the on-premises forest-to-forest sync many environments still need.**
 
 PassFerry fills that gap with a focused, transparent, MIT-licensed implementation using only documented Microsoft APIs:
 
