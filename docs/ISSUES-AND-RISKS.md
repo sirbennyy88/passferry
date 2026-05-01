@@ -149,7 +149,7 @@ But there are real failure modes you must avoid:
 
 The single biggest risk. A typical DC with Specops has:
 
-```
+```text
 Notification Packages = scecli SPP3FLT
 ```
 

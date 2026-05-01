@@ -28,7 +28,7 @@ Every team consolidating AD forests faces the same choice: pay for a commercial 
 
 ## What it does
 
-```
+```text
 User account created in source AD (source = system of record)
        │
        │  PassFerry pipeline:
@@ -93,7 +93,7 @@ PassFerry was designed for Server 2025 from the start. Specifically:
 
 ## Repository layout
 
-```
+```text
 passferry/
 ├── LICENSE                   MIT
 ├── README.md                 (this file)

@@ -33,7 +33,7 @@ Either way, during install, check the **"Desktop development with C++"** workloa
 
 The C++ workload installs the SDK by default, but verify these subfolders exist after install:
 
-```
+```text
 C:\Program Files (x86)\Windows Kits\10\Include\<sdk-version>
 ├── ucrt\         (Universal C runtime)
 ├── shared\       (shared user/kernel headers)

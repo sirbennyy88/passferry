@@ -59,7 +59,7 @@ re-add.)
 Create `C:\ProgramData\PassFerryBroker\allowed-clients.txt`. One thumbprint per
 line, comments with `#`:
 
-```
+```text
 # source-a DCs
 ABCDEF0123456789...
 1234567890ABCDEF...

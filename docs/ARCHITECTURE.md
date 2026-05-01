@@ -2,7 +2,7 @@
 
 ## High-level flow
 
-```
+```text
 User account created in source AD (source = system of record)
        │
        │  PassFerry pipeline:
@@ -20,7 +20,7 @@ PassFerry is **strictly one-way**: source → target. The source remains the sys
 
 ## Component diagram
 
-```
+```text
 Source Forests (one or more)                       Target Forest
 ┌──────────────────────────────┐                  ┌──────────────────────────────┐
 │  Source DC                   │                  │  Target DC                   │
@@ -108,7 +108,7 @@ Read-only, makes no changes.
 
 ## Data flow for a single password change
 
-```
+```text
 T+0.000s   User changes password on workstation joined to source-a forest
 T+0.001s   Workstation sends password change to its source DC
 T+0.002s   Source DC: LSASS validates against current password policy, accepts
