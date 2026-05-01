@@ -22,6 +22,10 @@ PassFerry fills that gap with a focused, transparent, MIT-licensed implementatio
 - **LDAPS** for the final password set in the target domain
 - **gMSA** identities — no static service-account passwords
 
+## Why open source?
+
+Every team consolidating AD forests faces the same choice: pay for a commercial migration tool, or hand-roll something brittle. The mechanism PassFerry uses (LSA password filter → forwarder → broker → LDAPS) is well-documented Microsoft API; there's no technical reason a working implementation should be locked behind enterprise licensing. The codebase is small enough — one C file, four PowerShell scripts — that you can audit it in an afternoon before letting it near LSASS. That's the point.
+
 ## What it does
 
 ```
@@ -55,7 +59,7 @@ PassFerry is **focused, not comprehensive**. It is *adjacent* to ADMT, not a ful
 - SID History (small extension, planned for v0.2)
 - Trusts (out of scope — these are re-created manually)
 
-For full forest consolidation today, commercial tools (Quest, Semperis) remain a more complete solution. PassFerry is the right choice when:
+For full forest consolidation today, commercial tools (Quest Migrator Pro, Semperis ADFR, BinaryTree) remain more complete solutions. For password sync only, the closest commercial peer is Specops Password Sync — quote-priced, per-user licensing. PassFerry is the right choice when:
 
 - You need real-time password sync between source and target AD forests
 - You are consolidating into a Server 2025 target domain
@@ -114,6 +118,92 @@ passferry/
 └── .github/
     └── workflows/build.yml   CI to compile the DLL on every push
 ```
+
+## Requirements
+
+PassFerry is MIT-licensed and free to use commercially. Total cost of running PassFerry: zero, plus the Windows Server licenses you already own (and an EV code-signing certificate if you have RunAsPPL enabled — see code-signing tier below).
+
+### Source forest domain controllers (where the LSA filter runs)
+
+| Component | Requirement | Notes |
+|---|---|---|
+| OS | Windows Server 2016, 2019, 2022, or 2025 (x64) | Same compiled DLL works on all |
+| PowerShell | 5.1 minimum (built-in) | PS 7.x supported but not required; 5.1 chosen so no extra runtimes need installing on DCs |
+| .NET Framework | 4.7.2+ | Built into supported OS |
+| LSA Protection (RunAsPPL) | Must be OFF for self-signed or internal-CA-signed DLL | Pre-flight script flags this |
+| Privileges to install | Domain Admin (one-time, registers filter and creates gMSA) | Runtime: gMSA only |
+| Disk space | < 10 MB | DLL plus forwarder logs |
+| Network | Outbound TCP 8443 to broker (configurable) | No inbound exposure required |
+
+### Broker host (target forest member server)
+
+| Component | Requirement | Notes |
+|---|---|---|
+| OS | Windows Server 2019, 2022, or 2025 | 2025 recommended to match target DC |
+| PowerShell | 7.4+ recommended, 5.1 minimum | Broker uses HttpListener and modern TLS handling |
+| RSAT-AD-PowerShell | Required | `Install-WindowsFeature RSAT-AD-PowerShell` |
+| Privileges | gMSA with delegated reset-password rights on target OU only | Not domain-wide |
+| Network | Inbound TCP 8443 from each source DC; outbound LDAPS (636) to target DC | mTLS allow-list enforced |
+| Certificates | Server cert (broker) plus client certs (one per source DC) | Self-signed for lab, internal PKI for production |
+
+### Target forest domain controllers
+
+| Component | Requirement | Notes |
+|---|---|---|
+| OS | Windows Server 2025 (designed for) | Older versions may work, untested |
+| LDAPS | Required, reachable from broker | Pre-flight validates |
+| Functional level | 2016 or higher | Modern attribute support |
+
+### Build requirements (only if compiling the DLL yourself)
+
+CI builds the DLL on every commit and uploads as a workflow artifact, so most users never need to build locally. For production deployments, build and sign yourself so you can verify what runs in your LSASS.
+
+| Component | Requirement | Notes |
+|---|---|---|
+| Compiler | Visual Studio Build Tools 2022 with "Desktop development with C++" workload | 2019 and 2026 also work; 2022 is canonical |
+| Windows SDK | 10.0.19041 or later | Provides `ntsecapi.h`, `subauth.h` |
+| Architecture | x64 only | LSASS is x64 on supported Server versions |
+| Code signing — lab | Self-signed cert | Works only if RunAsPPL=0 on every target DC |
+| Code signing — production (no PPL) | Internal CA-issued code-signing cert | Works only if RunAsPPL=0 |
+| Code signing — production (RunAsPPL=1 anywhere) | EV cert plus Microsoft LSA-plugin signing program | ~3 weeks turnaround; EV cert ~$300/yr if you don't already have one |
+| Build host OS | Windows 10/11 or Windows Server 2019+ | No Linux cross-compilation |
+
+## What you do NOT need
+
+- A Microsoft licensing agreement beyond your existing Windows Server CALs
+- Quest, Semperis, BinaryTree, Specops, or any commercial migration/sync tool license
+- An Azure subscription (Entra Connect runs on-premises if you already have it)
+- Internet access on the DCs at runtime — build and sign once, deploy offline
+- Trusts between source and target forests (PassFerry is the bridge, though trusts make some operations easier)
+
+## Coexistence with other password tools
+
+PassFerry's LSA filter coexists by design with other registered password filters. Microsoft's filter chain calls each registered filter independently; PassFerry only consumes password-change notifications and never rejects them, so it cannot interfere with policy-enforcement filters.
+
+| Tool | Purpose | Coexists with PassFerry? |
+|---|---|---|
+| Microsoft default (`scecli`) | Default Domain Policy enforcement | Yes — leave it registered |
+| **Lithnet Password Protection for AD** | **Open-source breach-list and weak-password enforcement (MIT-licensed)** | **Yes — recommended pairing for fully open-source AD password security** |
+| Microsoft Entra Password Protection (on-prem agent) | Microsoft global banned-password list | Yes |
+| Specops Password Policy (`SPP3FLT`) | Commercial password complexity / breach-list enforcement | Yes |
+| nFront Password Filter | Commercial complexity enforcement | Yes |
+| Specops Password Sync | Commercial cross-forest password sync | **Direct alternative — pick one, not both** |
+| Quest / BinaryTree migration suites | Full forest consolidation | Different scope; PassFerry is focused, Quest is comprehensive |
+
+### Recommended open-source pairing: PassFerry + Lithnet Password Protection
+
+For fully open-source AD password security, pair PassFerry (sync) with [Lithnet Password Protection for Active Directory](https://github.com/lithnet/ad-password-protection) (enforcement). Together they cover both halves of the password-management problem without commercial licensing:
+
+- **Lithnet** runs as an LSA password filter, enforces complexity rules, and blocks passwords found in HaveIBeenPwned breach lists. Mature, MIT-licensed, production-grade.
+- **PassFerry** runs as a separate LSA password filter, captures accepted password changes, and synchronizes them to your target forest.
+
+Both filters coexist in `Notification Packages`. They run independently — Lithnet decides whether a password is acceptable; PassFerry only sees the change after Lithnet (and any other filter, including Microsoft's defaults) has approved it. There are no known conflicts; the architectures are complementary by design.
+
+A documented deployment recipe for the PassFerry + Lithnet pairing is on the [v0.8 roadmap](ROADMAP.md). Until then, follow Lithnet's installation guide and PassFerry's installation guide separately — both products use the standard `Notification Packages` registration, and our deployment script appends rather than replaces, so the registration order does not matter for correctness.
+
+### Critical coexistence note
+
+When registering PassFerry's filter in `HKLM\SYSTEM\CurrentControlSet\Control\Lsa\Notification Packages`, **append**; never replace. Replacing the registry value wipes existing filters (`scecli`, Lithnet, Specops, etc.) and silently breaks default password policy AND any commercial filter you have. The deployment script in `filter-dll/BUILD.md` does this correctly.
 
 ## Compatibility
 

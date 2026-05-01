@@ -86,6 +86,21 @@ These are organized as sprints, not commitments. Anyone is welcome to take any o
 
 **Difficulty**: Low. Mostly formatting and shipping existing data.
 
+## v0.8 — Lithnet integration recipe (Sprint 7)
+
+**Why**: PassFerry handles password *synchronization* but does not enforce password *quality* (length, complexity, breached-password lookups). The natural open-source pairing is [Lithnet Password Protection for Active Directory](https://github.com/lithnet/ad-password-protection) — mature, MIT-licensed, production-grade enforcement. The README mentions this pairing; v0.8 turns it into a tested, documented recipe.
+
+**Scope**:
+- Add a `coexistence/lithnet/` directory with a tested deployment recipe for PassFerry + Lithnet.
+- GPO snippet showing correct ordering in `Notification Packages` (ordering does not affect correctness, but documenting the recommended ordering helps with debugging).
+- Validation steps: prove that Lithnet still rejects breach-list passwords AND PassFerry still syncs accepted passwords, after both are installed.
+- Pre-flight script extension: detect Lithnet's filter and confirm it's registered correctly.
+- Documentation: a "Fully open-source AD password security with PassFerry + Lithnet" guide.
+
+**Difficulty**: Low. We are not writing enforcement logic — Lithnet does that excellently. We are documenting and validating clean coexistence patterns.
+
+**Why this is not a from-scratch enforcement build**: Lithnet Password Protection is mature, MIT-licensed, integrates HaveIBeenPwned, and is production-grade. Reinventing it would be wasted effort. PassFerry's value-add is the documented integration recipe.
+
 ## Stretch / out of scope
 
 - **Bidirectional sync** (target → source). Explicitly out of scope by design — PassFerry is one-way.
