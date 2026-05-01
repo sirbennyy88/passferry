@@ -183,6 +183,8 @@ PassFerry's LSA filter coexists by design with other registered password filters
 | Tool | Purpose | Coexists with PassFerry? |
 |---|---|---|
 | Microsoft default (`scecli`) | Default Domain Policy enforcement | Yes — leave it registered |
+| PassFiltEx | Open-source enforcement filter (MIT-licensed, by Ryan Ries) | Yes |
+| OpenPasswordFilter | Open-source dictionary-based enforcement (older but established) | Yes |
 | **Lithnet Password Protection for AD** | **Open-source breach-list and weak-password enforcement (MIT-licensed)** | **Yes — recommended pairing for fully open-source AD password security** |
 | Microsoft Entra Password Protection (on-prem agent) | Microsoft global banned-password list | Yes |
 | Specops Password Policy (`SPP3FLT`) | Commercial password complexity / breach-list enforcement | Yes |
@@ -226,6 +228,21 @@ PassFerry is **not affiliated with, endorsed by, or sponsored by Microsoft Corpo
 This software runs custom code inside the LSASS process of domain controllers. Misconfiguration or bugs in this code can render a DC unbootable. Always test in an isolated lab. Always have console access to your DCs. Never deploy to production without completing the test plan and rehearsing the rollback procedure.
 
 The MIT license disclaims all warranty. You are responsible for the consequences of running this software in your environment.
+
+## Prior art and acknowledgments
+
+PassFerry's LSA filter implementation follows patterns established by prior open-source work in the AD password-filter space, particularly Ryan Ries's [PassFiltEx](https://github.com/ryanries/PassFiltEx) and the broader [Lithnet](https://github.com/lithnet) project. Where those projects focus on password *enforcement* (rejecting weak or breached passwords), PassFerry focuses on password *synchronization* across forests. The two patterns are complementary — Lithnet decides whether a password is acceptable; PassFerry, running as a separate filter, mirrors accepted passwords to the target forest.
+
+If you need both enforcement and sync (the typical case for forest consolidation), running PassFerry and Lithnet together gives you fully open-source AD password security on Windows Server 2025.
+
+Other open-source projects that informed PassFerry's design:
+
+- [PassFiltEx](https://github.com/ryanries/PassFiltEx) — reference LSA password filter implementation, with the most thorough documentation of "code that runs in LSASS without crashing it" patterns
+- [Lithnet Password Protection for Active Directory](https://github.com/lithnet/ad-password-protection) — production-grade enforcement filter with HaveIBeenPwned integration
+- [OpenPasswordFilter](https://github.com/jephthai/OpenPasswordFilter) and its forks — earlier dictionary-based enforcement work
+- Microsoft's own [password filter documentation](https://learn.microsoft.com/en-us/windows/win32/secmgmt/installing-and-registering-a-password-filter-dll) — the foundation everyone builds on
+
+PassFerry adds a piece that was missing in the open-source ecosystem: a documented, code-signed forest-to-forest synchronization pipeline using the same documented LSA filter mechanism, designed for Windows Server 2025's security defaults (AES-only, mTLS, code-signed, RunAsPPL-aware).
 
 ## Credits
 
