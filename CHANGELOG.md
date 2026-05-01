@@ -5,7 +5,7 @@ All notable changes to PassFerry are documented here. Format follows [Keep a Cha
 ## [v0.1] — 2026-05-01 (initial release)
 
 ### Added
-- LSA password notification filter DLL (`sync_pwd_filter.dll`) — captures password changes on source DCs and writes to a local named pipe
+- LSA password notification filter DLL (`passferry_filter.dll`) — captures password changes on source DCs and writes to a local named pipe
 - Forwarder PowerShell service — drains the LSA pipe and forwards password events to the broker over mTLS HTTPS
 - Sync broker PowerShell service — receives password events, resolves the matching target user via the configured back-reference attribute, calls `Set-ADAccountPassword` over LDAPS
 - User provisioning script (`provisioning.ps1`) — reads source forests via ADWS, creates/updates users in the target OU, stamps a back-reference attribute (default `extensionAttribute15`)

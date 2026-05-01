@@ -187,8 +187,8 @@ Changing the back-reference attribute (e.g., from `extensionAttribute15` to `emp
 
 | Feature | Why deferred | Sprint |
 |---------|--------------|--------|
-| DPAPI retry queue in forwarder | Drops password changes if broker unreachable | v0.1.1 |
-| objectGUID sent from forwarder | Avoids broker round-trip to source | v0.1.1 |
+| DPAPI retry queue in forwarder | Drops password changes if broker unreachable | v0.2 |
+| objectGUID sent from forwarder | Avoids broker round-trip to source | v0.2 |
 | SID History migration | Provisioning extension only | v0.2 |
 | Group migration | Substantial new logic | v0.3 |
 | Computer migration | Requires client-side agent | v0.4 |

@@ -112,8 +112,8 @@ passferry/
 │   ├── forwarder.ps1         User-mode service draining the LSA pipe
 │   └── broker.ps1            HTTPS listener, sets passwords on target
 ├── filter-dll/
-│   ├── sync_pwd_filter.c     LSA password filter source
-│   ├── sync_pwd_filter.def   Linker exports definition
+│   ├── passferry_filter.c    LSA password filter source
+│   ├── passferry_filter.def  Linker exports definition
 │   └── BUILD.md              Build, sign, and deploy instructions
 └── .github/
     └── workflows/build.yml   CI to compile the DLL on every push
@@ -167,6 +167,8 @@ CI builds the DLL on every commit and uploads as a workflow artifact, so most us
 | Code signing — production (no PPL) | Internal CA-issued code-signing cert | Works only if RunAsPPL=0 |
 | Code signing — production (RunAsPPL=1 anywhere) | EV cert plus Microsoft LSA-plugin signing program | ~3 weeks turnaround; EV cert ~$300/yr if you don't already have one |
 | Build host OS | Windows 10/11 or Windows Server 2019+ | No Linux cross-compilation |
+
+> 💡 **Building on a fresh machine?** See [`filter-dll/BUILD.md`](filter-dll/BUILD.md) for the complete build environment setup guide, including SDK component selection, `cl.exe` PATH troubleshooting, WSL/UNC path gotchas, and what success looks like.
 
 ## What you do NOT need
 

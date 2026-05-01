@@ -12,6 +12,90 @@ self-signed approach will not work** — you'll need either Microsoft LSA-plugin
 signing (paid, ~3 weeks turnaround, requires EV cert) or to disable
 RunAsPPL on those DCs (not recommended).
 
+## Build environment setup (if you've never compiled a Windows DLL before)
+
+Skip this section if `cl.exe` is on your PATH and you've used MSVC before. Otherwise, read carefully — this is where most first-time builds fail.
+
+### Install Visual Studio Build Tools
+
+Either of these works:
+
+- **Visual Studio Build Tools 2022** — smaller download, command-line only. https://visualstudio.microsoft.com/downloads/ → "Tools for Visual Studio" → Build Tools 2022.
+- **Visual Studio Community 2022 or 2026** — full IDE, includes Build Tools. Free for individual / OSS use.
+
+Either way, during install, check the **"Desktop development with C++"** workload. This pulls in:
+
+- MSVC compiler (`cl.exe`)
+- Windows SDK (provides `ntsecapi.h`, `subauth.h`, `windows.h`)
+- `dumpbin.exe`, `link.exe`, signing tools
+
+### Required Windows SDK components
+
+The C++ workload installs the SDK by default, but verify these subfolders exist after install:
+
+```
+C:\Program Files (x86)\Windows Kits\10\Include\<sdk-version>
+├── ucrt\         (Universal C runtime)
+├── shared\       (shared user/kernel headers)
+├── um\           (user-mode headers — REQUIRED, this is what we need)
+└── winrt\        (modern WinRT, not used)
+```
+
+If `um/` is missing, the workload installer didn't finish or didn't include the right components. The build will fail with errors like `cannot open include file: 'windows.h'`. Re-run the installer and explicitly tick the SDK option. The installer can take 10-30 minutes to finish downloading SDK components — wait it out before retrying the build.
+
+### Verify cl.exe is reachable
+
+`cl.exe` is **not** on your default PATH after install. You have three options:
+
+1. **Use the "Developer Command Prompt for VS 2022"** (or 2026) — this is a regular `cmd.exe` with the MSVC environment pre-loaded. Start menu → search "Developer". Simplest option.
+2. **Use the "Developer PowerShell for VS 2022"** — same thing for PowerShell.
+3. **Manual environment activation** — from a regular shell, run:
+   ```cmd
+   "C:\Program Files\Microsoft Visual Studio\<version>\Community\VC\Auxiliary\Build\vcvars64.bat"
+   ```
+   After this, `cl.exe`, `dumpbin.exe`, etc. are on PATH for that shell session only.
+
+Verify with:
+
+```cmd
+where cl
+cl /?
+```
+
+If `where cl` returns a path under `Microsoft Visual Studio\...\bin\Hostx64\x64\cl.exe`, you're good.
+
+### Building from WSL — important gotcha
+
+If your repo lives on the WSL/Linux side (e.g., `/home/<user>/passferry/`), you cannot compile directly via `cmd.exe` — `cmd.exe` refuses to start with a UNC working directory (`\\wsl.localhost\Ubuntu\...`). Two workarounds:
+
+- **Recommended**: keep the repo on the Windows filesystem (`/mnt/c/dev/passferry/` from WSL = `C:\dev\passferry\` from Windows). Edit from either side, compile from Windows side. No copy step needed.
+- **Workaround**: use a batch file with `pushd` (not `cd`) to enter the UNC path — `pushd` maps it to a temporary drive letter. Copy the DLL back manually. See [the build session notes in CHANGELOG.md](../CHANGELOG.md) for how this played out during v0.1 development.
+
+Linux cross-compilation with `mingw-w64` is technically possible but produces binaries with slightly different runtime characteristics. For an LSASS-resident DLL, MSVC is recommended — it's the toolchain that gets the most testing in the wild for this use case.
+
+### What "success" looks like
+
+After a clean build:
+
+- `passferry_filter.dll` exists (~600-700 KB with `/Zi` debug info embedded)
+- `passferry_filter.pdb` exists (~6-7 MB)
+- `dumpbin /EXPORTS passferry_filter.dll` lists exactly three exports: `InitializeChangeNotify`, `PasswordChangeNotify`, `PasswordFilter`
+- `dumpbin /HEADERS passferry_filter.dll | findstr machine` shows `8664 machine (x64)`
+
+If any of these checks fail, the DLL will not load into LSASS at all — fix the build before signing. Verifying exports and architecture takes 10 seconds and saves hours of debugging "why won't my DLL load on the DC."
+
+### Common build errors
+
+| Error | Cause | Fix |
+|---|---|---|
+| `'cl' is not recognized` | Not in Developer Command Prompt | Use Developer Command Prompt or run `vcvars64.bat` |
+| `cannot open include file: 'ntsecapi.h'` | Windows SDK `um/` headers missing | Re-run VS installer, tick "Windows SDK" component |
+| `LNK1158: cannot run 'rc.exe'` | SDK incomplete | Re-run VS installer, tick "Windows SDK" |
+| `error C2059: syntax error` after copy | Source has wrong line endings | Re-clone with `git config core.autocrlf input` |
+| `cmd.exe ... UNC paths are not supported` | Compiling from a WSL/UNC path | Move repo to Windows filesystem (`/mnt/c/...`) |
+| `dumpbin: not recognized` | Same PATH issue as `cl` | Same fix — Developer Command Prompt or `vcvars64.bat` |
+| `error LNK2019: unresolved external symbol` | Wrong `.def` file or missing `/MACHINE:X64` | Verify the linker invocation matches the one above |
+
 ## OS compatibility
 
 The same DLL binary works on:
