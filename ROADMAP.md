@@ -1,10 +1,32 @@
 # PassFerry Roadmap
 
-PassFerry v0.1 ships with the two ADMT capabilities most affected by the Server 2025 deprecation: **user provisioning** and **real-time password sync**. The features below are the path from "focused tool" to "credible community alternative to ADMT for forest consolidation."
+PassFerry v0.1 is a focused password sync tool. This roadmap describes the path toward broader ADMT-adjacent feature coverage. Items are organized as sprints, not commitments — anyone is welcome to take any of them on. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
-These are organized as sprints, not commitments. Anyone is welcome to take any of them on — see [CONTRIBUTING.md](CONTRIBUTING.md).
+## At a glance
 
-## v0.1 (current — May 2026)
+| Version | Theme | Status | Effort | Depends on |
+|---------|-------|--------|--------|------------|
+| v0.1    | User provisioning + password sync | ✅ Released | — | — |
+| v0.1.1  | DPAPI retry queue + forwarder GUID resolution | 📋 Planned | ~1 weekend | v0.1 |
+| v0.2    | SID History migration | 📋 Planned | ~1 weekend | v0.1 |
+| v0.3    | Group migration | 📋 Planned | ~2 weekends | v0.1 |
+| v0.4    | Computer / workstation migration | 📋 Planned | ~3-4 weekends | v0.2 (SID History) |
+| v0.5    | Service account migration | 📋 Planned | ~1-2 weekends | v0.1 |
+| v0.6    | Security translation (re-ACL) | 📋 Planned | weeks | v0.2 (SID History) |
+| v0.7    | Reporting & observability | 📋 Planned | ~1 weekend | v0.1 |
+| v0.8    | Lithnet integration recipe | 📋 Planned | ~1 weekend | v0.1 |
+
+**Status legend**: ✅ released · 🚧 in progress · 📋 planned · ⏸ blocked · ❌ cancelled
+
+## Current focus
+
+v0.1 is in **prototype / lab-testing phase**. Field reports from real multi-forest environments are the most valuable contribution right now — see [docs/TEST-PLAN.md](docs/TEST-PLAN.md).
+
+Active sprint: none yet. v0.1.1 is the natural next target if a contributor takes it on; SID History (v0.2) is the obvious feature follow-up.
+
+## v0.1 (released — May 2026)
+
+**Status**: ✅ Released · **Effort**: — · **Depends on**: —
 
 - ✅ Source → Target user provisioning (PowerShell, watermarked, idempotent)
 - ✅ Real-time password sync via LSA filter DLL + forwarder + broker
@@ -15,7 +37,21 @@ These are organized as sprints, not commitments. Anyone is welcome to take any o
 - ✅ Hardening / rollout documentation
 - ✅ Compatible with source DCs on 2016/2019/2022/2025; target on 2025
 
+## v0.1.1 — Reliability improvements (Sprint 0)
+
+**Status**: 📋 Planned · **Effort**: ~1 weekend · **Depends on**: v0.1
+
+**Why**: Two known limitations from v0.1 affect production reliability. Both are self-contained improvements that don't require new feature scope.
+
+**Scope**:
+- DPAPI-encrypted retry queue in the forwarder — retains password-change events when the broker is unreachable and replays them when it comes back online
+- Forwarder-side SAM → `objectGUID` resolution — eliminates the broker's round-trip to the source forest on every password-change event, reducing latency and source-side load
+
+**Difficulty**: Low. Both are contained changes to existing components; no new external dependencies.
+
 ## v0.2 — SID History migration (Sprint 1)
+
+**Status**: 📋 Planned · **Effort**: ~1 weekend · **Depends on**: v0.1
 
 **Why**: Without SID History, migrated users lose access to resources still ACL'd by their old SID. ADMT carries SID History as a default; PassFerry should too.
 
@@ -29,6 +65,8 @@ These are organized as sprints, not commitments. Anyone is welcome to take any o
 
 ## v0.3 — Group migration (Sprint 2)
 
+**Status**: 📋 Planned · **Effort**: ~2 weekends · **Depends on**: v0.1
+
 **Why**: Users without their group memberships are users without permissions. Most consolidations need this.
 
 **Scope**:
@@ -40,6 +78,8 @@ These are organized as sprints, not commitments. Anyone is welcome to take any o
 **Difficulty**: Medium. Logic is straightforward; edge cases (orphaned members, nested groups across forests, name collisions) take care.
 
 ## v0.4 — Computer account migration (Sprint 3)
+
+**Status**: 📋 Planned · **Effort**: ~3-4 weekends · **Depends on**: v0.2 (SID History)
 
 **Why**: ADMT migrates computers along with users. PassFerry currently doesn't.
 
@@ -53,6 +93,8 @@ These are organized as sprints, not commitments. Anyone is welcome to take any o
 
 ## v0.5 — Service account migration (Sprint 4)
 
+**Status**: 📋 Planned · **Effort**: ~1-2 weekends · **Depends on**: v0.1
+
 **Why**: SCM-registered services running as named source-domain accounts will break when those accounts move.
 
 **Scope**:
@@ -63,6 +105,8 @@ These are organized as sprints, not commitments. Anyone is welcome to take any o
 **Difficulty**: Medium. Inventory is easy; the conversion-to-gMSA recommendation is the value-add.
 
 ## v0.6 — Security translation (Sprint 5)
+
+**Status**: 📋 Planned · **Effort**: weeks · **Depends on**: v0.2 (SID History)
 
 **Why**: This is ADMT's most painful feature to replicate, and where commercial tools (Quest, Semperis) genuinely differentiate themselves.
 
@@ -76,6 +120,8 @@ These are organized as sprints, not commitments. Anyone is welcome to take any o
 
 ## v0.7 — Reporting and observability (Sprint 6)
 
+**Status**: 📋 Planned · **Effort**: ~1 weekend · **Depends on**: v0.1
+
 **Why**: Audit trails matter. "What did PassFerry do last week?" should have a clear answer.
 
 **Scope**:
@@ -87,6 +133,8 @@ These are organized as sprints, not commitments. Anyone is welcome to take any o
 **Difficulty**: Low. Mostly formatting and shipping existing data.
 
 ## v0.8 — Lithnet integration recipe (Sprint 7)
+
+**Status**: 📋 Planned · **Effort**: ~1 weekend · **Depends on**: v0.1
 
 **Why**: PassFerry handles password *synchronization* but does not enforce password *quality* (length, complexity, breached-password lookups). The natural open-source pairing is [Lithnet Password Protection for Active Directory](https://github.com/lithnet/ad-password-protection) — mature, MIT-licensed, production-grade enforcement. The README mentions this pairing; v0.8 turns it into a tested, documented recipe.
 
